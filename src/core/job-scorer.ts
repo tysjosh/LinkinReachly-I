@@ -77,19 +77,19 @@ const SENIORITY_LEVELS: Array<{ patterns: RegExp[]; level: number }> = [
   { patterns: [/lead/i, /staff/i, /principal/i, /manager/i], level: 5 },
   { patterns: [/director/i, /head\s+of/i], level: 6 },
   { patterns: [/VP/i, /vice\s+president/i], level: 7 },
-  { patterns: [/chief/i, /\bC[A-Z]O\b/, /founder/i, /partner/i], level: 8 }
+  { patterns: [/chief/i, /\bC[A-Z]O\b/i, /founder/i, /partner/i], level: 8 }
 ]
 
 // ── Helper functions ──────────────────────────────────────────────────────
 
 function extractSeniorityLevel(title: string): number {
-  let best = 3 // default mid-level
+  let best = -1
   for (const { patterns, level } of SENIORITY_LEVELS) {
     if (patterns.some(p => p.test(title))) {
       best = Math.max(best, level)
     }
   }
-  return best
+  return best === -1 ? 3 : best
 }
 
 function extractExperienceTypes(title: string): string[] {
@@ -159,13 +159,13 @@ function scoreSkillMatch(profile: UserProfile, job: JobPosting): { score: number
   const missing: string[] = []
   for (const req of allJobRequirements) {
     const reqTokens = tokenize(req)
-    const found = reqTokens.some(t => {
+    const matchCount = reqTokens.filter(t => {
       for (const skill of allProfileSkills) {
         if (tokenize(skill).includes(t)) return true
       }
       return false
-    })
-    if (!found) missing.push(req)
+    }).length
+    if (matchCount < reqTokens.length * 0.5) missing.push(req)
   }
 
   // Score: weighted by recency of the entries where skills appeared
@@ -356,7 +356,7 @@ export function scoreJobFitHeuristic(
       matched: bestStrength > 20,
       matchedEntryId: bestEntry?.id,
       matchStrength: Math.round(Math.min(100, bestStrength)),
-      recencyAdjusted: Math.round(Math.min(100, bestStrength * (bestEntry?.recencyWeight ?? 0.5))),
+      recencyAdjusted: Math.round(Math.min(100, bestStrength)),
       detail: bestEntry
         ? `Matched via ${bestEntry.role} at ${bestEntry.company}`
         : 'No strong match found'

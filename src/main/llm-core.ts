@@ -189,11 +189,16 @@ async function fetchViaProxy(
   }
 
   let data: { choices?: Array<{ message?: { content?: string } }> }
+  let rawBody: string
   try {
-    data = (await res.json()) as typeof data
+    rawBody = typeof res.text === 'function' ? await res.text() : JSON.stringify(await res.json())
   } catch {
-    const text = await res.text().catch(() => '(unreadable)')
-    throw new Error(`LLM proxy returned non-JSON response (status ${res.status}): ${text.slice(0, 200)}`)
+    throw new Error(`LLM proxy returned unreadable response (status ${res.status})`)
+  }
+  try {
+    data = JSON.parse(rawBody) as typeof data
+  } catch {
+    throw new Error(`LLM proxy returned non-JSON response (status ${res.status}): ${rawBody.slice(0, 200)}`)
   }
   const content = data.choices?.[0]?.message?.content
   const outputEstimate = content != null ? Math.round(String(content).length / 4) : 0
@@ -247,11 +252,16 @@ async function fetchChatCompletion(
     throw new Error(await res.text())
   }
   let data2: { choices?: Array<{ message?: { content?: string } }> }
+  let rawBody2: string
   try {
-    data2 = (await res.json()) as typeof data2
+    rawBody2 = typeof res.text === 'function' ? await res.text() : JSON.stringify(await res.json())
   } catch {
-    const text = await res.text().catch(() => '(unreadable)')
-    throw new Error(`LLM returned non-JSON response (status ${res.status}): ${text.slice(0, 200)}`)
+    throw new Error(`LLM returned unreadable response (status ${res.status})`)
+  }
+  try {
+    data2 = JSON.parse(rawBody2) as typeof data2
+  } catch {
+    throw new Error(`LLM returned non-JSON response (status ${res.status}): ${rawBody2.slice(0, 200)}`)
   }
   const content = data2.choices?.[0]?.message?.content
   const outputEstimate = content != null ? Math.round(String(content).length / 4) : 0

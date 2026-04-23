@@ -123,7 +123,7 @@ Strict JSON: {"variant_index": number, "body": string}`
       .replace(/\{headline\}/g, String(facts.headline || row.headline || ''))
       .replace(/\{senderBackground\}/g, String(settings.userBackground || '').slice(0, 500))
       .replace(/\{goal\}/g, String(settings.lastGoal || ''))
-    + `\n\nOutput strict JSON: {"variant_index": ${Math.min(templates.length - 1, 0)}, "body": string}`
+    + `\n\nOutput strict JSON: {"variant_index": ${Math.max(templates.length - 1, 0)}, "body": string}`
   })()
 
   const userPayload: Record<string, unknown> = {
@@ -152,6 +152,7 @@ Strict JSON: {"variant_index": number, "body": string}`
       }
     }
     const MAX_LEN = 280
+    text = fillTemplate(text, row, facts)
     if (text.length > MAX_LEN) {
       const fb = fillTemplate(templates[idx], row, facts)
       return {
@@ -161,7 +162,6 @@ Strict JSON: {"variant_index": number, "body": string}`
         detail: `over_limit:${text.length}`
       }
     }
-    text = fillTemplate(text, row, facts)
     const validation = validateMessageBody(text, settings.mustInclude, MAX_LEN)
     if (!validation.ok) {
       const fb = fillTemplate(templates[idx], row, facts)

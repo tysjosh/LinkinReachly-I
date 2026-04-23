@@ -218,4 +218,26 @@ describe('buildEasyApplyProfileFieldMap', () => {
     expect(byIndex[1]).toBe('MBA')
     expect(byIndex[2]).toBe('')
   })
+
+  it('detects PhD as Doctorate for highest education level', () => {
+    const m = buildEasyApplyProfileFieldMap(
+      makeProfile({
+        background: { educationSummary: 'PhD Computer Science, Stanford 2022' }
+      })
+    )
+    expect(m['What is the highest level of education you have completed']).toBe('Doctorate')
+    expect(m['PhD']).toBe('Yes')
+    expect(m["Master's Degree"]).toBe('Yes')
+    expect(m["Bachelor's Degree"]).toBe('Yes')
+  })
+
+  it('detects JD as Doctorate for highest education level', () => {
+    const m = buildEasyApplyProfileFieldMap(
+      makeProfile({
+        background: { educationSummary: 'JD, Harvard Law School 2021' }
+      })
+    )
+    expect(m['What is the highest level of education you have completed']).toBe('Doctorate')
+    expect(m['Professional degree']).toBe('Yes')
+  })
 })

@@ -204,3 +204,104 @@ describe('rankJobsByFit', () => {
     expect(ranked[0].heuristicScore).toHaveProperty('dimensions')
   })
 })
+
+describe('seniority detection for junior roles', () => {
+  it('scores intern job lower for a senior profile than a mid-level job', () => {
+    const seniorProfile = makeProfile({
+      entries: [
+        {
+          id: 's1',
+          type: 'experience',
+          role: 'Senior Software Engineer',
+          company: 'BigCo',
+          location: 'NYC',
+          startDate: 'Jan 2022',
+          endDate: 'Present',
+          durationMonths: 36,
+          skills: ['software', 'engineering'],
+          metrics: [],
+          domain: ['enterprise'],
+          experienceType: 'engineer',
+          bullets: ['Led platform team'],
+          recencyWeight: 1.0
+        }
+      ]
+    })
+    const internJob = makeJob({ title: 'Software Engineering Intern', description: 'Summer internship' })
+    const midJob = makeJob({ title: 'Software Engineer', description: 'Mid-level engineering role' })
+    const internResult = scoreJobFitHeuristic(seniorProfile, internJob)
+    const midResult = scoreJobFitHeuristic(seniorProfile, midJob)
+    expect(internResult.dimensions.seniorityFit).toBeLessThan(midResult.dimensions.seniorityFit)
+  })
+
+  it('gives a high seniority score when intern applies to intern role', () => {
+    const internProfile = makeProfile({
+      entries: [
+        {
+          id: 'i1',
+          type: 'experience',
+          role: 'Marketing Intern',
+          company: 'StartupCo',
+          location: 'SF',
+          startDate: 'Jun 2025',
+          endDate: 'Present',
+          durationMonths: 3,
+          skills: ['marketing'],
+          metrics: [],
+          domain: [],
+          experienceType: 'intern',
+          bullets: ['Assisted with campaigns'],
+          recencyWeight: 1.0
+        }
+      ]
+    })
+    const internJob = makeJob({ title: 'Marketing Intern', description: 'Entry-level internship' })
+    const result = scoreJobFitHeuristic(internProfile, internJob)
+    expect(result.dimensions.seniorityFit).toBe(100)
+  })
+})
+
+describe('recencyAdjusted requirement scoring', () => {
+  it('does not double-penalize older experience in recencyAdjusted', () => {
+    const result = scoreJobFitHeuristic(makeProfile(), makeJob({
+      requirements: ['equity research', 'financial modeling']
+    }))
+    for (const rm of result.matchedRequirements) {
+      expect(rm.recencyAdjusted).toBe(rm.matchStrength)
+    }
+  })
+})
+
+describe('multi-word requirement matching', () => {
+  it('reports a gap when a multi-word requirement has only partial token overlap', () => {
+    const narrowProfile = makeProfile({
+      entries: [
+        {
+          id: 'n1',
+          type: 'experience',
+          role: 'Operations Manager',
+          company: 'Acme',
+          location: 'NYC',
+          startDate: 'Jan 2023',
+          endDate: 'Present',
+          durationMonths: 12,
+          skills: ['enterprise'],
+          metrics: [],
+          domain: ['enterprise'],
+          experienceType: 'manager',
+          bullets: ['Managed enterprise operations'],
+          recencyWeight: 1.0
+        }
+      ]
+    })
+    const withPartialReq = scoreJobFitHeuristic(narrowProfile, makeJob({
+      requirements: ['enterprise SaaS sales experience']
+    }))
+    const withFullReq = scoreJobFitHeuristic(narrowProfile, makeJob({
+      requirements: ['enterprise operations']
+    }))
+    // Partial overlap requirement should produce a lower baseRatio (more missing)
+    // than a fully-matched requirement, resulting in a lower overall score
+    expect(withPartialReq.overall).toBeLessThan(withFullReq.overall)
+  })
+})

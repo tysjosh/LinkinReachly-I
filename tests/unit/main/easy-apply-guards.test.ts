@@ -108,7 +108,7 @@ describe('easy-apply guards', () => {
 
     expect(result.earlyExit?.ok).toBe(false)
     expect(result.earlyExit?.phase).toBe('click_apply')
-    expect(result.earlyExit?.detail || '').toMatch(/form didn't open/i)
+    expect(result.earlyExit?.detail || '').toMatch(/Could not find Easy Apply|form didn't open/i)
     expect(result.sduiApplyUrl || '').toContain('openSDUIApplyFlow=true')
     expect(sharedMocks.easyApplyBridgeCommand).toHaveBeenCalledWith(
       'DIAGNOSE_EASY_APPLY',

@@ -191,6 +191,26 @@ describe('composeMessageDetailed', () => {
     expect(result.body).toBe('AI hi Sam')
     expect(result.variant).toBe('T0-llm')
   })
+
+  it('falls back to template when LLM body exceeds 280 chars after variable expansion', async () => {
+    const padding = 'x'.repeat(258)
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: `{"variant_index":0,"body":"Hi {firstName}, ${padding}"}` } }]
+      })
+    } as Response)
+
+    const result = await composeMessageDetailed(
+      { ...baseSettings, llmEnabled: true },
+      { profileUrl: 'https://www.linkedin.com/in/sam/', firstName: 'Bartholomew-Alexander' },
+      {},
+      { executionId: 'generic_connection' }
+    )
+
+    expect(result.route).toBe('template')
+    expect(result.detail).toMatch(/over_limit/)
+  })
 })
 
 describe('detectJobIntent', () => {

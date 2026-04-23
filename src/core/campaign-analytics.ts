@@ -29,7 +29,7 @@ type LogEntry = {
 
 export function computeCampaignMetrics(logEntries: LogEntry[]): CampaignMetrics {
   const sentEntries = logEntries.filter((e) => e.status === 'sent')
-  const acceptedEntries = logEntries.filter((e) => e.status === 'accepted' || e.status === 'followup_dm_sent')
+  const acceptedEntries = logEntries.filter((e) => e.status === 'accepted')
   const dmEntries = logEntries.filter((e) => e.status === 'followup_dm_sent')
   const responseEntries = logEntries.filter((e) => e.status === 'response')
 

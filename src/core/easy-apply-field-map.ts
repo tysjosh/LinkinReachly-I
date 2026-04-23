@@ -189,11 +189,13 @@ export function buildEasyApplyProfileFieldMap(profile: ApplicantProfile): Record
   // Education-related questions
   const edu = profile.background.educationSummary || ''
   if (edu.trim()) {
+    const hasPhd = /phd|ph\.d|doctorate|doctor of/i.test(edu)
+    const hasJdMd = /\bjd\b|j\.d\.|juris doctor|\bmd\b|m\.d\.|doctor of medicine/i.test(edu)
     const hasMBA = /mba/i.test(edu)
-    const hasMasters = hasMBA || /master|mph|ms\b|m\.s\./i.test(edu)
+    const hasMasters = hasPhd || hasJdMd || hasMBA || /master|mph|ms\b|m\.s\./i.test(edu)
     const hasBachelors = hasMasters || /bachelor|bsc|b\.s\.|b\.a\./i.test(edu)
     const hasHighSchool = hasBachelors // if you have a bachelor's, you completed HS
-    const degreeLevel = hasMBA ? "Master's Degree" : hasBachelors ? "Bachelor's Degree" : "High School"
+    const degreeLevel = hasPhd ? 'Doctorate' : hasJdMd ? 'Doctorate' : hasMBA ? "Master's Degree" : hasMasters ? "Master's Degree" : hasBachelors ? "Bachelor's Degree" : "High School"
     profileFieldMap['What is the highest level of education you have completed'] = degreeLevel
     profileFieldMap['Highest level of education'] = degreeLevel
     profileFieldMap['highest degree'] = degreeLevel
@@ -206,6 +208,15 @@ export function buildEasyApplyProfileFieldMap(profile: ApplicantProfile): Record
     }
     if (hasMasters) profileFieldMap["Master's Degree"] = 'Yes'
     if (hasMBA) profileFieldMap['MBA'] = 'Yes'
+    if (hasPhd) {
+      profileFieldMap['PhD'] = 'Yes'
+      profileFieldMap['Doctorate'] = 'Yes'
+      profileFieldMap['Doctoral degree'] = 'Yes'
+    }
+    if (hasJdMd) {
+      profileFieldMap['Doctorate'] = 'Yes'
+      profileFieldMap['Professional degree'] = 'Yes'
+    }
   }
 
   // Work experience detail fields (repeater sections on "My Experience" forms)
