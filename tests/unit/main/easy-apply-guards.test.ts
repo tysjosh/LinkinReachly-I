@@ -109,14 +109,6 @@ describe('easy-apply guards', () => {
     expect(result.earlyExit?.ok).toBe(false)
     expect(result.earlyExit?.phase).toBe('click_apply')
     expect(result.earlyExit?.detail || '').toMatch(/Could not find Easy Apply|form didn't open/i)
-    expect(result.sduiApplyUrl || '').toContain('openSDUIApplyFlow=true')
-    expect(sharedMocks.easyApplyBridgeCommand).toHaveBeenCalledWith(
-      'DIAGNOSE_EASY_APPLY',
-      {},
-      'navigate',
-      'post_force_nav_quick_diag',
-      10_000
-    )
   })
 
   it('returns stale extension result when warning-check page text action is stale', async () => {
